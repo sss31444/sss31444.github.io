@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>我的主页</title>
     <style>
         body {
@@ -29,7 +29,7 @@
             margin: 30px 0;
             text-align: center;
         }
-        .nav a {
+        .nav a, .nav-video a {
             display: inline-block;
             padding: 10px 20px;
             background-color: #3498db;
@@ -37,15 +37,28 @@
             text-decoration: none;
             border-radius: 5px;
             transition: background-color 0.3s;
+            margin: 0 10px;
         }
-        .nav a:hover {
+        .nav a:hover, .nav-video a:hover {
             background-color: #2980b9;
+        }
+        .nav-video a {
+            background-color: #e74c3c; /* 不同颜色区分 */
         }
         footer {
             margin-top: 30px;
             text-align: center;
             color: #7f8c8d;
             font-size: 0.9em;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            .nav a, .nav-video a {
+                display: block;
+                margin: 10px 0;
+            }
         }
     </style>
 </head>
@@ -61,7 +74,7 @@
 
         <p>您可以点击下方按钮进入视频播放页面。</p>
         
-        <div class="nav">
+        <div class="nav-video">
             <a href="player.html">播放视频</a>
         </div>
         
@@ -69,7 +82,12 @@
     </div>
     
     <footer>
-        &copy; 2023 我的网站. 保留所有权利.
+        &copy; <span id="year"></span> 我的网站. 保留所有权利.
     </footer>
+
+    <script>
+        // 动态获取当前年份
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
 </body>
 </html>
