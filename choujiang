@@ -1,0 +1,176 @@
+<div style="font-family: 'Arial', sans-serif; max-width: 700px; margin: auto; padding: 30px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 15px; box-shadow: 0 15px 30px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+  <!-- 装饰元素 -->
+  <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: rgba(106, 17, 203, 0.1); border-radius: 50%;"></div>
+  <div style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: rgba(37, 117, 252, 0.1); border-radius: 50%;"></div>
+  
+  <h2 style="text-align: center; color: #2c3e50; margin-bottom: 30px; font-size: 32px; font-weight: 700; position: relative; z-index: 1;">
+    <span style="display: inline-block; transform: rotate(-10deg);">✨</span> 
+    林翠心屿 幸运大抽奖
+    <span style="display: inline-block; transform: rotate(15deg);">✨</span>
+  </h2>
+  
+  <div id="participants" style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 6px 12px rgba(0,0,0,0.08); border-left: 5px solid #6a11cb; position: relative; z-index: 1;">
+    <p style="margin: 0; color: #555; font-size: 17px; line-height: 1.6;">
+      <span style="display: inline-block; margin-right: 10px; font-size: 20px;">👑</span>
+      <strong style="color: #6a11cb;">参与人员:</strong> 伊丽奇、孙剑、李金梦、吴利洁、孔令娜、孙玉侠、刘晴、吴萌、董馨、位旭炎、曹学超
+    </p>
+  </div>
+  
+  <div style="margin: 35px 0; display: flex; align-items: center; justify-content: center; gap: 20px; position: relative; z-index: 1;">
+    <div style="display: flex; align-items: center; background: rgba(255,255,255,0.9); padding: 12px 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
+      <label for="winnerCount" style="margin-right: 12px; color: #2c3e50; font-weight: 600; font-size: 17px;">中奖人数:</label>
+      <input type="number" id="winnerCount" min="1" max="11" value="1" style="padding: 12px; width: 70px; border: 2px solid #ddd; border-radius: 8px; font-size: 17px; text-align: center; font-weight: 600; transition: all 0.3s;">
+    </div>
+    <button onclick="draw()" style="padding: 15px 30px; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 6px 12px rgba(106, 17, 203, 0.3); position: relative; overflow: hidden;">
+      <span style="position: relative; z-index: 2;">🎰 立即抽奖</span>
+      <span style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%); z-index: 1;"></span>
+    </button>
+  </div>
+  
+  <div id="result" style="padding: 30px; background: rgba(255,255,255,0.9); border-radius: 12px; text-align: center; min-height: 150px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 8px 16px rgba(0,0,0,0.1); transition: all 0.5s; position: relative; z-index: 1; border: 2px dashed transparent;">
+    <p style="margin: 0; color: #7f8c8d; font-size: 18px; font-style: italic;">幸运女神正在降临...</p>
+  </div>
+  
+  <div style="margin-top: 25px; text-align: center; color: #95a5a6; font-size: 15px; position: relative; z-index: 1;">
+    <p>© 2025 林翠心屿豪华抽奖系统 | <span style="color: #6a11cb;">愿幸运与您同在</span></p>
+    <div style="display: flex; justify-content: center; gap: 15px; margin-top: 10px;">
+      <span style="display: inline-block; animation: float 3s ease-in-out infinite;">🎈</span>
+      <span style="display: inline-block; animation: float 3s ease-in-out infinite 0.5s;">🎁</span>
+      <span style="display: inline-block; animation: float 3s ease-in-out infinite 1s;">🏆</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function draw() {
+  const participants = ["李金梦","孙剑", "伊丽奇", "孔令娜", "吴利洁", "孙玉侠", "刘晴","吴萌","董馨","位旭炎","曹学超"];
+  const count = parseInt(document.getElementById("winnerCount").value);
+  
+  // 按钮点击效果
+  const button = document.querySelector('button');
+  button.style.transform = 'scale(0.95)';
+  button.style.boxShadow = '0 2px 5px rgba(106, 17, 203, 0.3)';
+  setTimeout(() => { 
+    button.style.transform = 'scale(1)'; 
+    button.style.boxShadow = '0 6px 12px rgba(106, 17, 203, 0.3)';
+  }, 150);
+  
+  // 加载动画
+  const resultDiv = document.getElementById("result");
+  resultDiv.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+      <div class="spinner" style="width: 60px; height: 60px; border-width: 5px;"></div>
+      <p style="margin: 0; color: #6a11cb; font-size: 16px;">正在抽取${count}位幸运儿...</p>
+    </div>
+  `;
+  
+  // 模拟抽奖过程
+  setTimeout(() => {
+    if(participants.length < count) {
+      resultDiv.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+          <span style="font-size: 24px;">⚠️</span>
+          <p style="margin: 0; color: #e74c3c; font-weight: 600; font-size: 18px;">参与者人数不足</p>
+        </div>
+      `;
+      return;
+    }
+    
+    // 随机抽奖
+    const shuffled = [...participants].sort(() => 0.5 - Math.random());
+    const winners = shuffled.slice(0, count);
+    
+    // 中奖效果
+    resultDiv.style.background = 'linear-gradient(135deg, rgba(245, 247, 250, 0.9) 0%, rgba(224, 234, 252, 0.9) 100%)';
+    resultDiv.style.border = '2px dashed #6a11cb';
+    resultDiv.innerHTML = `
+      <div style="position: relative;">
+        <h3 style="color: #2c3e50; margin-top: 0; font-size: 24px; margin-bottom: 15px;">🏆 中奖名单 (${count}人)</h3>
+        <div style="background: rgba(255,255,255,0.7); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <p style="font-size: 24px; font-weight: 700; color: #6a11cb; margin: 0; line-height: 1.4;">${winners.join("</p><p style='font-size: 24px; font-weight: 700; color: #6a11cb; margin: 0; line-height: 1.4;'>")}</p>
+        </div>
+        <p style="color: #27ae60; margin-top: 10px; font-size: 16px; font-weight: 600;">
+          <span style="display: inline-block; animation: bounce 0.5s ease infinite alternate;">🎉</span> 
+          恭喜中奖! 你是今天最幸运的人！ 
+          <span style="display: inline-block; animation: bounce 0.5s ease infinite alternate 0.2s;">🎊</span>
+        </p>
+      </div>
+    `;
+    
+    // 庆祝效果
+    createConfetti();
+  }, 1500);
+}
+
+function createConfetti() {
+  const colors = ['#6a11cb', '#2575fc', '#ff6b6b', '#4ecdc4', '#f7d060', '#a55eea'];
+  const resultDiv = document.getElementById("result");
+  
+  for (let i = 0; i < 50; i++) {
+    const confetti = document.createElement('div');
+    confetti.style.position = 'absolute';
+    confetti.style.width = '10px';
+    confetti.style.height = '10px';
+    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.borderRadius = '50%';
+    confetti.style.left = Math.random() * 100 + '%';
+    confetti.style.top = '-20px';
+    confetti.style.opacity = '0.8';
+    confetti.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
+    confetti.style.animation = `confetti-fall ${Math.random() * 3 + 2}s ease-in forwards`;
+    resultDiv.appendChild(confetti);
+    
+    // 移除彩带元素
+    setTimeout(() => {
+      confetti.remove();
+    }, 3000);
+  }
+}
+</script>
+
+<style>
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #6a11cb;
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-5px); }
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(600px) rotate(360deg); opacity: 0; }
+}
+
+button:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 10px 20px rgba(106, 17, 203, 0.4) !important;
+}
+
+input:focus {
+  outline: none;
+  border-color: #6a11cb !important;
+  box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.2);
+}
+
+#result {
+  background-image: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.3) 0%, transparent 20%),
+                   radial-gradient(circle at 90% 80%, rgba(255,255,255,0.3) 0%, transparent 20%);
+}
+</style>
