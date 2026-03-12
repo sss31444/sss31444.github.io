@@ -343,6 +343,24 @@
             color: var(--danger);
         }
         
+        /* 加载中样式 */
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: var(--gray);
+        }
+        
+        .loading i {
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         @media (max-width: 768px) {
             .container {
                 margin: 20px;
@@ -372,7 +390,10 @@
         <!-- 通知列表区域 -->
         <h2><i class="fas fa-bell"></i> 最新通知</h2>
         <div id="notificationsList" class="notifications-list">
-            <!-- 通知项会通过JS动态生成 -->
+            <div class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>加载通知中...</p>
+            </div>
         </div>
         
         <!-- 新建通知区域 -->
@@ -405,6 +426,21 @@
     </div>
 
     <script>
+        // ======================== 配置区域（必须修改） ========================
+        // 1. 你的 GitHub 用户名
+        const GITHUB_USERNAME = 'sss31444'; 
+        // 2. 你的 GitHub Personal Access Token（需要有 gist 权限）
+        const GITHUB_TOKEN = '你的GitHub Token'; 
+        // 3. Gist 的 ID（首次发布后会生成，这里先留空）
+        let GIST_ID = ''; 
+        // 4. 管理员密码（自定义）
+        const ADMIN_PASSWORD = '你的自定义管理员密码'; 
+        // =================================================================
+
+        let isAdmin = false;
+        let gistFilename = 'notifications.json'; // 存储通知的文件名
+        let gistRawUrl = ''; // Gist 原始内容地址
+
         // DOM元素
         const notificationsList = document.getElementById('notificationsList');
         const notificationTitle = document.getElementById('notificationTitle');
@@ -414,7 +450,7 @@
         const toastIcon = document.getElementById('toastIcon');
         const toastMessage = document.getElementById('toastMessage');
         
-        // 初始化页面加载动画
+        // 页面加载
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.querySelector('.container');
             container.style.opacity = '0';
@@ -426,133 +462,21 @@
                 container.style.transform = 'translateY(0)';
             }, 100);
             
-            // 加载通知列表
-            loadNotifications();
+            // 验证管理员
+            checkAdminStatus();
+            
+            // 初始化 Gist
+            initGist();
         });
-        
-        // 从本地存储加载通知
-        function loadNotifications() {
-            const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-            
-            // 按时间倒序排序
-            notifications.sort((a, b) => new Date(b.time) - new Date(a.time));
-            
-            if (notifications.length === 0) {
-                notificationsList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <p>暂无通知，发布你的第一条通知吧！</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            // 渲染通知列表
-            notificationsList.innerHTML = notifications.map((notification, index) => `
-                <div class="notification-item">
-                    <div class="notification-header">
-                        <div class="notification-title">${escapeHtml(notification.title)}</div>
-                        <div class="notification-time">${formatTime(notification.time)}</div>
-                    </div>
-                    <div class="notification-content">${escapeHtml(notification.content)}</div>
-                    <div class="notification-actions">
-                        <button class="delete-btn" onclick="deleteNotification(${index})">
-                            <i class="fas fa-trash"></i> 删除
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        // 发布新通知
-        publishBtn.addEventListener('click', function() {
-            const title = notificationTitle.value.trim();
-            const content = notificationContent.value.trim();
-            
-            // 验证输入
-            if (!title) {
-                showToast('错误', '通知标题不能为空！', 'error');
-                return;
-            }
-            
-            // 获取现有通知
-            const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-            
-            // 添加新通知
-            notifications.push({
-                title: title,
-                content: content,
-                time: new Date().toISOString()
-            });
-            
-            // 保存到本地存储
-            localStorage.setItem('notifications', JSON.stringify(notifications));
-            
-            // 清空表单
-            notificationTitle.value = '';
-            notificationContent.value = '';
-            
-            // 重新加载列表
-            loadNotifications();
-            
-            // 显示成功提示
-            showToast('成功', '通知发布成功！', 'success');
-        });
-        
-        // 删除通知
-        function deleteNotification(index) {
-            if (confirm('确定要删除这条通知吗？')) {
-                const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-                notifications.splice(index, 1);
-                localStorage.setItem('notifications', JSON.stringify(notifications));
-                loadNotifications();
-                showToast('成功', '通知已删除！', 'success');
-            }
-        }
-        
-        // 格式化时间显示
-        function formatTime(timeString) {
-            const date = new Date(timeString);
-            return date.toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-        }
-        
-        // HTML转义，防止XSS
-        function escapeHtml(text) {
-            if (!text) return '';
-            return text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
-        
-        // 显示提示消息
-        function showToast(title, message, type) {
-            toast.className = 'toast';
-            toast.classList.add(`toast-${type}`);
-            
-            if (type === 'success') {
-                toastIcon.className = 'fas fa-check-circle';
-            } else if (type === 'error') {
-                toastIcon.className = 'fas fa-exclamation-circle';
-            }
-            
-            toastMessage.textContent = message;
-            toast.classList.add('show');
-            
-            // 3秒后隐藏
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-    </script>
-</body>
-</html>
+
+        // 管理员验证
+        function checkAdminStatus() {
+            const userPassword = prompt("请输入管理员密码以发布/删除通知：");
+            if (userPassword === ADMIN_PASSWORD) {
+                isAdmin = true;
+                showToast('验证成功', '你现在可以发布/删除通知', 'success');
+            } else {
+                isAdmin = false;
+                showToast('访客模式', '你只能查看通知', 'info');
+                // 隐藏发布表单
+                document.querySelector('.new-notification-form
