@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>通知中心 | 我的个人主页</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-hover: #3a56d4;
+            --secondary: #f72585;
+            --secondary-hover: #e5177b;
+            --tertiary: #7209b7;
+            --tertiary-hover: #5a08a0;
+            --dark: #2b2d42;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --success: #4cc9f0;
+            --success-hover: #3daeda;
+            --danger: #f48c06;
+            --danger-hover: #e07e05;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background-color: #f0f2f5;
+            color: var(--dark);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255,255,255,0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255,255,255,0.1) 0%, transparent 20%);
+            animation: gradientShift 15s ease infinite;
+            background-size: 200% 200%;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 2px;
+        }
+        
+        h2 {
+            color: var(--primary);
+            margin: 30px 0 20px;
+            font-size: 1.5rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        /* 通知列表样式 */
+        .notifications-list {
+            margin: 20px 0;
+        }
+        
+        .notification-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid var(--primary);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification-item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .notification-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .notification-time {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+        
+        .notification-content {
+            color: var(--dark);
+            line-height: 1.8;
+            margin-bottom: 10px;
+            white-space: pre-wrap; /* 保留换行 */
+        }
+        
+        .notification-actions {
+            text-align: right;
+        }
+        
+        .delete-btn {
+            color: var(--danger);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.3s ease;
+        }
+        
+        .delete-btn:hover {
+            color: var(--danger-hover);
+        }
+        
+        .delete-btn i {
+            margin-right: 5px;
+        }
+        
+        /* 新建通知表单样式 */
+        .new-notification-form {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-top: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+        
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 28px;
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(255,255,255,0.2), rgba(255,255,255,0));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .btn:hover::before {
+            opacity: 1;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+        }
+        
+        .btn-success:hover {
+            background-color: var(--success-hover);
+        }
+        
+        .action-buttons {
+            text-align: right;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 30px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: var(--primary-hover);
+            text-decoration: underline;
+        }
+        
+        .back-link i {
+            margin-right: 8px;
+        }
+        
+        /* 空状态提示 */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--gray);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+        
+        /* 提示消息样式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .toast-success {
+            border-left: 4px solid var(--success);
+        }
+        
+        .toast-error {
+            border-left: 4px solid var(--danger);
+        }
+        
+        .toast i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .toast-success i {
+            color: var(--success);
+        }
+        
+        .toast-error i {
+            color: var(--danger);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 20px;
+                padding: 25px;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            
+            .notification-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .notification-time {
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>通知中心</h1>
+        
+        <!-- 通知列表区域 -->
+        <h2><i class="fas fa-bell"></i> 最新通知</h2>
+        <div id="notificationsList" class="notifications-list">
+            <!-- 通知项会通过JS动态生成 -->
+        </div>
+        
+        <!-- 新建通知区域 -->
+        <h2><i class="fas fa-plus-circle"></i> 发布新通知</h2>
+        <div class="new-notification-form">
+            <div class="form-group">
+                <label for="notificationTitle">通知标题</label>
+                <input type="text" id="notificationTitle" placeholder="请输入通知标题（必填）">
+            </div>
+            <div class="form-group">
+                <label for="notificationContent">通知内容</label>
+                <textarea id="notificationContent" placeholder="请输入通知正文，可以换行"></textarea>
+            </div>
+            <div class="action-buttons">
+                <button id="publishBtn" class="btn btn-success">
+                    <i class="fas fa-paper-plane"></i> 发布通知
+                </button>
+            </div>
+        </div>
+        
+        <a href="index.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> 返回个人主页
+        </a>
+    </div>
+    
+    <!-- 提示消息组件 -->
+    <div id="toast" class="toast">
+        <i id="toastIcon" class="fas"></i>
+        <span id="toastMessage"></span>
+    </div>
+
+    <script>
+        // DOM元素
+        const notificationsList = document.getElementById('notificationsList');
+        const notificationTitle = document.getElementById('notificationTitle');
+        const notificationContent = document.getElementById('notificationContent');
+        const publishBtn = document.getElementById('publishBtn');
+        const toast = document.getElementById('toast');
+        const toastIcon = document.getElementById('toastIcon');
+        const toastMessage = document.getElementById('toastMessage');
+        
+        // 初始化页面加载动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.container');
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                container.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+            }, 100);
+            
+            // 加载通知列表
+            loadNotifications();
+        });
+        
+        // 从本地存储加载通知
+        function loadNotifications() {
+            const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+            
+            // 按时间倒序排序
+            notifications.sort((a, b) => new Date(b.time) - new Date(a.time));
+            
+            if (notifications.length === 0) {
+                notificationsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>暂无通知，发布你的第一条通知吧！</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 渲染通知列表
+            notificationsList.innerHTML = notifications.map((notification, index) => `
+                <div class="notification-item">
+                    <div class="notification-header">
+                        <div class="notification-title">${escapeHtml(notification.title)}</div>
+                        <div class="notification-time">${formatTime(notification.time)}</div>
+                    </div>
+                    <div class="notification-content">${escapeHtml(notification.content)}</div>
+                    <div class="notification-actions">
+                        <button class="delete-btn" onclick="deleteNotification(${index})">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 发布新通知
+        publishBtn.addEventListener('click', function() {
+            const title = notificationTitle.value.trim();
+            const content = notificationContent.value.trim();
+            
+            // 验证输入
+            if (!title) {
+                showToast('错误', '通知标题不能为空！', 'error');
+                return;
+            }
+            
+            // 获取现有通知
+            const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+            
+            // 添加新通知
+            notifications.push({
+                title: title,
+                content: content,
+                time: new Date().toISOString()
+            });
+            
+            // 保存到本地存储
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+            
+            // 清空表单
+            notificationTitle.value = '';
+            notificationContent.value = '';
+            
+            // 重新加载列表
+            loadNotifications();
+            
+            // 显示成功提示
+            showToast('成功', '通知发布成功！', 'success');
+        });
+        
+        // 删除通知
+        function deleteNotification(index) {
+            if (confirm('确定要删除这条通知吗？')) {
+                const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+                notifications.splice(index, 1);
+                localStorage.setItem('notifications', JSON.stringify(notifications));
+                loadNotifications();
+                showToast('成功', '通知已删除！', 'success');
+            }
+        }
+        
+        // 格式化时间显示
+        function formatTime(timeString) {
+            const date = new Date(timeString);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+        
+        // HTML转义，防止XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+        
+        // 显示提示消息
+        function showToast(title, message, type) {
+            toast.className = 'toast';
+            toast.classList.add(`toast-${type}`);
+            
+            if (type === 'success') {
+                toastIcon.className = 'fas fa-check-circle';
+            } else if (type === 'error') {
+                toastIcon.className = 'fas fa-exclamation-circle';
+            }
+            
+            toastMessage.textContent = message;
+            toast.classList.add('show');
+            
+            // 3秒后隐藏
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
