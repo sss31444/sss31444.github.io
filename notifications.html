@@ -620,12 +620,14 @@
                     // 更新Gist
                     await updateGist(existingNotifications);
                 } 
-                // 情况2：无GIST_ID，创建新Gist
-                else {
-                    const gistData = await createGist([newNotification]);
-                    GIST_ID = gistData.id;
-                    showToast('成功', `Gist创建成功，ID：${GIST_ID}（请复制到代码的GIST_ID中）`, 'success');
-                }
+               // 情况2：无GIST_ID，创建新Gist
+        else {
+                const gistData = await createGist([newNotification]);
+                GIST_ID = gistData.id;
+                // 同时弹出alert和toast，确保能看到ID
+                alert(`Gist创建成功，ID：${GIST_ID}\n请复制这个ID填到代码的GIST_ID中！`);
+                showToast('成功', `Gist创建成功，ID：${GIST_ID}（已弹窗提醒）`, 'success');
+}
 
                 // 清空表单+重新加载
                 notificationTitle.value = '';
