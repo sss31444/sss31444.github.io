@@ -498,10 +498,10 @@
 
     <script>
         // ======================== 配置区域（仅改这4处） ========================
-        const GITHUB_USERNAME = 'sss31444';  // 你的GitHub用户名（不用改）
+        const GITHUB_USERNAME = 'sss31444';  // 你的GitHub用户名
         let GITHUB_TOKEN = '';               // 空着，手动输入
-        let GIST_ID = 'c2f3ad2d5cb15ede79e04f4f28e3963f';                    // 首次发布后填，先空着
-        const ADMIN_PASSWORD = 'ideapady450tsixp';  // 你的管理员密码（改成自己的）
+        let GIST_ID = 'c2f3ad2d5cb15ede79e04f4f28e3963f';  // 你的GIST ID（已填）
+        const ADMIN_PASSWORD = 'ideapady450tsixp';  // 你的管理员密码
         // =====================================================================
 
         let isAdmin = false;
@@ -524,7 +524,7 @@
         const detailTime = document.getElementById('detailTime');
         const detailContent = document.getElementById('detailContent');
         
-        // 页面加载：先弹密码框，再加载通知（核心修复）
+        // 页面加载：先弹密码框，再加载通知
         document.addEventListener('DOMContentLoaded', async function() {
             // 页面动画
             listContainer.style.opacity = '0';
@@ -569,30 +569,37 @@
             });
         }
 
-        // 加载通知（兼容无Gist、加载失败的情况）
+        // 加载通知（修复缓存问题，强制获取最新数据）
         async function loadNotifications() {
             try {
-                // 情况1：有GIST_ID，尝试加载
+                // 清空本地数据，确保每次加载都是最新的
+                allNotifications = [];
+                notificationsList.innerHTML = `
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p>加载通知中...</p>
+                    </div>
+                `;
+
                 if (GIST_ID) {
-                    gistRawUrl = `https://gist.githubusercontent.com/${GITHUB_USERNAME}/${GIST_ID}/raw/${gistFilename}`;
+                    // 加时间戳+禁用缓存，强制获取最新数据
+                    gistRawUrl = `https://gist.githubusercontent.com/${GITHUB_USERNAME}/${GIST_ID}/raw/${gistFilename}?t=${new Date().getTime()}`;
                     const response = await fetch(gistRawUrl, {
                         method: 'GET',
-                        headers: {
-                            'Accept': 'application/json'
-                        },
-                        timeout: 10000 // 10秒超时
+                        headers: { 'Accept': 'application/json' },
+                        timeout: 10000,
+                        cache: 'no-cache' // 关键：禁用浏览器缓存
                     });
 
                     if (!response.ok) throw new Error('Gist加载失败');
                     
                     allNotifications = await response.json();
+                    // 兼容非数组格式
+                    if (!Array.isArray(allNotifications)) allNotifications = [];
                     // 按时间倒序排序
                     allNotifications.sort((a, b) => new Date(b.time) - new Date(a.time));
-                    
                     renderNotifications(allNotifications);
-                } 
-                // 情况2：无GIST_ID（首次使用）
-                else {
+                } else {
                     notificationsList.innerHTML = `
                         <div class="empty-state">
                             <i class="fas fa-inbox"></i>
@@ -601,9 +608,7 @@
                         </div>
                     `;
                 }
-            } 
-            // 所有错误都显示空状态+提示
-            catch (error) {
+            } catch (error) {
                 console.log('加载通知失败：', error);
                 notificationsList.innerHTML = `
                     <div class="empty-state">
@@ -612,7 +617,7 @@
                         ${isAdmin ? '<p style="margin-top:10px;">请发布第一条通知</p>' : ''}
                     </div>
                 `;
-                showToast('提示', '首次使用请发布第一条通知', 'info');
+                showToast('提示', '加载失败，请刷新页面', 'info');
             }
         }
 
@@ -702,11 +707,14 @@
             try {
                 // 情况1：已有GIST_ID，更新
                 if (GIST_ID) {
-                    // 先获取现有通知
-                    const response = await fetch(gistRawUrl);
+                    // 先获取现有通知（加缓存禁用）
+                    const response = await fetch(`${gistRawUrl}?t=${new Date().getTime()}`, {
+                        cache: 'no-cache'
+                    });
                     let existingNotifications = [];
                     if (response.ok) {
                         existingNotifications = await response.json();
+                        if (!Array.isArray(existingNotifications)) existingNotifications = [];
                     }
                     // 添加新通知
                     existingNotifications.push(newNotification);
@@ -734,27 +742,82 @@
             }
         });
 
-        // 删除通知
+        // 删除通知（最终修复版：强制刷新Gist数据，确保删除生效）
         async function deleteNotification(index) {
-            if (!isAdmin || !GITHUB_TOKEN || !GIST_ID) return;
+            if (!isAdmin || !GITHUB_TOKEN || !GIST_ID) {
+                showToast('权限不足', '请先验证管理员并输入Token', 'error');
+                return;
+            }
             
             if (confirm('确定要删除这条通知吗？')) {
                 try {
-                    // 获取现有通知
-                    const response = await fetch(gistRawUrl);
-                    if (!response.ok) throw new Error('获取通知失败');
+                    // 1. 重置Gist原始地址（避免缓存）
+                    gistRawUrl = `https://gist.githubusercontent.com/${GITHUB_USERNAME}/${GIST_ID}/raw/${gistFilename}?t=${new Date().getTime()}`;
+                    
+                    // 2. 强制获取最新的Gist数据（加时间戳避免浏览器缓存）
+                    const response = await fetch(gistRawUrl, {
+                        method: 'GET',
+                        timeout: 10000,
+                        headers: {
+                            'Accept': 'application/json'
+                        },
+                        cache: 'no-cache' // 禁用缓存
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`获取最新通知失败（HTTP${response.status}）`);
+                    }
                     
                     let notifications = await response.json();
-                    // 删除指定索引的通知
+                    // 兼容空数据/非数组情况
+                    if (!Array.isArray(notifications)) {
+                        notifications = [];
+                    }
+
+                    // 3. 验证索引是否有效
+                    if (index < 0 || index >= notifications.length) {
+                        showToast('删除失败', '通知不存在', 'error');
+                        return;
+                    }
+
+                    // 4. 删除指定通知
                     notifications.splice(index, 1);
-                    // 更新Gist
-                    await updateGist(notifications);
-                    // 重新加载
-                    await loadNotifications();
+
+                    // 5. 更新Gist（确保请求生效）
+                    const updateResponse = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `token ${GITHUB_TOKEN}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json',
+                            'User-Agent': 'Mozilla/5.0' // 解决GitHub API的User-Agent要求
+                        },
+                        body: JSON.stringify({
+                            files: {
+                                [gistFilename]: {
+                                    content: JSON.stringify(notifications, null, 2)
+                                }
+                            }
+                        }),
+                        timeout: 15000 // 延长超时时间
+                    });
+
+                    // 打印详细错误信息（方便排查）
+                    if (!updateResponse.ok) {
+                        const errorData = await updateResponse.text();
+                        throw new Error(`更新Gist失败（HTTP${updateResponse.status}）：${errorData}`);
+                    }
+
+                    // 6. 强制重新加载（清空本地缓存+重新请求Gist）
+                    allNotifications = []; // 清空本地存储的通知数据
+                    await loadNotifications(); // 重新从Gist拉取最新数据
                     showToast('成功', '通知已删除！', 'success');
 
                 } catch (error) {
-                    showToast('删除失败', '错误：' + error.message, 'error');
+                    // 显示详细错误信息
+                    showToast('删除失败', error.message, 'error');
+                    // 控制台打印完整错误，方便排查
+                    console.error('删除通知详细错误：', error);
                 }
             }
         }
@@ -766,7 +829,8 @@
                 headers: {
                     'Authorization': `token ${GITHUB_TOKEN}`,
                     'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Mozilla/5.0'
                 },
                 body: JSON.stringify({
                     description: 'Notifications data for personal page',
@@ -790,7 +854,8 @@
                 headers: {
                     'Authorization': `token ${GITHUB_TOKEN}`,
                     'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Mozilla/5.0'
                 },
                 body: JSON.stringify({
                     files: {
