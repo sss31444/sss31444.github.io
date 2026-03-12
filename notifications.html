@@ -94,7 +94,7 @@
             padding-bottom: 10px;
         }
         
-        /* 通知列表样式 */
+        /* 通知列表样式（仅显示标题） */
         .notifications-list {
             margin: 20px 0;
         }
@@ -102,44 +102,89 @@
         .notification-item {
             background: white;
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
             border-left: 4px solid var(--primary);
-            transition: transform 0.3s ease;
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
         
         .notification-item:hover {
-            transform: translateY(-3px);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background-color: #f9faff;
         }
         
         .notification-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         
         .notification-title {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            color: var(--dark);
+            color: var(--primary);
+            text-decoration: none;
         }
         
         .notification-time {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--gray);
         }
         
-        .notification-content {
+        /* 详情页样式 */
+        .detail-container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        .detail-title {
+            font-size: 1.8rem;
             color: var(--dark);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .detail-time {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 20px;
+        }
+        
+        .detail-content {
+            font-size: 1rem;
             line-height: 1.8;
-            margin-bottom: 10px;
-            white-space: pre-wrap; /* 保留换行 */
+            color: var(--dark);
+            white-space: pre-wrap;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 8px 20px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background-color: var(--primary-hover);
         }
         
         .notification-actions {
             text-align: right;
+            margin-top: 5px;
         }
         
         .delete-btn {
@@ -147,10 +192,11 @@
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             display: inline-flex;
             align-items: center;
             transition: color 0.3s ease;
+            padding: 5px 10px;
         }
         
         .delete-btn:hover {
@@ -375,6 +421,11 @@
                 padding: 25px;
             }
             
+            .detail-container {
+                margin: 20px;
+                padding: 20px;
+            }
+            
             .btn {
                 padding: 10px 20px;
                 font-size: 0.9rem;
@@ -383,16 +434,18 @@
             .notification-header {
                 flex-direction: column;
                 align-items: flex-start;
+                gap: 5px;
             }
             
             .notification-time {
-                margin-top: 5px;
+                margin-top: 0;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- 通知列表页 -->
+    <div class="container" id="listContainer">
         <h1>通知中心</h1>
         
         <!-- 通知列表区域 -->
@@ -427,6 +480,16 @@
         </a>
     </div>
     
+    <!-- 通知详情页（默认隐藏） -->
+    <div class="detail-container" id="detailContainer">
+        <h2 class="detail-title" id="detailTitle"></h2>
+        <div class="detail-time" id="detailTime"></div>
+        <div class="detail-content" id="detailContent"></div>
+        <a href="javascript:void(0)" class="back-btn" onclick="backToList()">
+            <i class="fas fa-arrow-left"></i> 返回通知列表
+        </a>
+    </div>
+    
     <!-- 提示消息组件 -->
     <div id="toast" class="toast">
         <i id="toastIcon" class="fas"></i>
@@ -444,6 +507,7 @@
         let isAdmin = false;
         const gistFilename = 'notifications.json';
         let gistRawUrl = '';
+        let allNotifications = []; // 存储所有通知数据，供详情页使用
 
         // DOM元素
         const notificationsList = document.getElementById('notificationsList');
@@ -454,18 +518,22 @@
         const toast = document.getElementById('toast');
         const toastIcon = document.getElementById('toastIcon');
         const toastMessage = document.getElementById('toastMessage');
+        const listContainer = document.getElementById('listContainer');
+        const detailContainer = document.getElementById('detailContainer');
+        const detailTitle = document.getElementById('detailTitle');
+        const detailTime = document.getElementById('detailTime');
+        const detailContent = document.getElementById('detailContent');
         
         // 页面加载：先弹密码框，再加载通知（核心修复）
         document.addEventListener('DOMContentLoaded', async function() {
             // 页面动画
-            const container = document.querySelector('.container');
-            container.style.opacity = '0';
-            container.style.transform = 'translateY(20px)';
+            listContainer.style.opacity = '0';
+            listContainer.style.transform = 'translateY(20px)';
             
             setTimeout(() => {
-                container.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                container.style.opacity = '1';
-                container.style.transform = 'translateY(0)';
+                listContainer.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                listContainer.style.opacity = '1';
+                listContainer.style.transform = 'translateY(0)';
             }, 100);
             
             // 第一步：先验证管理员（必弹密码框）
@@ -517,11 +585,11 @@
 
                     if (!response.ok) throw new Error('Gist加载失败');
                     
-                    const notifications = await response.json();
+                    allNotifications = await response.json();
                     // 按时间倒序排序
-                    notifications.sort((a, b) => new Date(b.time) - new Date(a.time));
+                    allNotifications.sort((a, b) => new Date(b.time) - new Date(a.time));
                     
-                    renderNotifications(notifications);
+                    renderNotifications(allNotifications);
                 } 
                 // 情况2：无GIST_ID（首次使用）
                 else {
@@ -548,7 +616,7 @@
             }
         }
 
-        // 渲染通知列表
+        // 渲染通知列表（仅显示标题）
         function renderNotifications(notifications) {
             if (!notifications || notifications.length === 0) {
                 notificationsList.innerHTML = `
@@ -562,21 +630,46 @@
             }
             
             notificationsList.innerHTML = notifications.map((notification, index) => `
-                <div class="notification-item">
+                <div class="notification-item" onclick="showDetail(${index})">
                     <div class="notification-header">
                         <div class="notification-title">${escapeHtml(notification.title)}</div>
                         <div class="notification-time">${formatTime(notification.time)}</div>
                     </div>
-                    <div class="notification-content">${escapeHtml(notification.content)}</div>
                     ${isAdmin ? `
                         <div class="notification-actions">
-                            <button class="delete-btn" onclick="deleteNotification(${index})">
+                            <button class="delete-btn" onclick="event.stopPropagation(); deleteNotification(${index})">
                                 <i class="fas fa-trash"></i> 删除
                             </button>
                         </div>
                     ` : ''}
                 </div>
             `).join('');
+        }
+
+        // 显示通知详情
+        function showDetail(index) {
+            const notification = allNotifications[index];
+            if (!notification) return;
+            
+            // 填充详情数据
+            detailTitle.textContent = escapeHtml(notification.title);
+            detailTime.textContent = `发布时间：${formatTime(notification.time)}`;
+            detailContent.textContent = escapeHtml(notification.content);
+            
+            // 切换显示状态
+            listContainer.style.display = 'none';
+            detailContainer.style.display = 'block';
+        }
+
+        // 返回通知列表
+        function backToList() {
+            detailContainer.style.display = 'none';
+            listContainer.style.display = 'block';
+            // 重置列表动画
+            listContainer.style.opacity = '0';
+            setTimeout(() => {
+                listContainer.style.opacity = '1';
+            }, 100);
         }
 
         // 发布通知（核心逻辑）
@@ -621,13 +714,13 @@
                     await updateGist(existingNotifications);
                 } 
                // 情况2：无GIST_ID，创建新Gist
-        else {
-                const gistData = await createGist([newNotification]);
-                GIST_ID = gistData.id;
-                // 同时弹出alert和toast，确保能看到ID
-                alert(`Gist创建成功，ID：${GIST_ID}\n请复制这个ID填到代码的GIST_ID中！`);
-                showToast('成功', `Gist创建成功，ID：${GIST_ID}（已弹窗提醒）`, 'success');
-}
+                else {
+                    const gistData = await createGist([newNotification]);
+                    GIST_ID = gistData.id;
+                    // 同时弹出alert和toast，确保能看到ID
+                    alert(`Gist创建成功，ID：${GIST_ID}\n请复制这个ID填到代码的GIST_ID中！`);
+                    showToast('成功', `Gist创建成功，ID：${GIST_ID}（已弹窗提醒）`, 'success');
+                }
 
                 // 清空表单+重新加载
                 notificationTitle.value = '';
